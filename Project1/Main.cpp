@@ -11,7 +11,7 @@
 #include <iostream>
 #include "Header.h"
 
-// Testing for OpenGL glew inclusion
+// Testing for OpenGL glew inclusion http://ogldev.atspace.co.uk/
 #include <glew.h>
 #include <glut.h>
 
@@ -42,7 +42,7 @@ void main(int argc, char** argv) {
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 	glutInitWindowSize(500, 500);
 	glutInitWindowPosition(50, 50);
-	glutCreateWindow("Points");
+	glutCreateWindow("Display");
 	glutDisplayFunc(display);
 
 	myinit();

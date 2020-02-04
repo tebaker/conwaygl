@@ -1,3 +1,2 @@
 ﻿  Main.cpp
-c:\users\talon.baker\documents\cppmath\project1\main.cpp(40): warning C4326: return type of 'main' should be 'int' instead of 'void'
   Project1.vcxproj -> C:\Users\talon.baker\Documents\cppmath\Project1\Debug\Project1.exe

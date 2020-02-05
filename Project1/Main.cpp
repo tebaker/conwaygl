@@ -17,6 +17,9 @@
 static const int h = 500;
 static const int w = 500;
 
+// Frames Per Second
+static const int FPS = 10;
+
 // Class holding and modifying all the cells currently in the game
 class LifeContainer {
 	// Holding contests of the each cell in the game
@@ -25,19 +28,10 @@ class LifeContainer {
 public:
 	// Will generate a random set of cells placed around the grid
 	LifeContainer() {
-
 		// Seeding rand
 		srand(time( nullptr ));
 
-		// Placing 500 random cells in the grid
-		for (int i = 0; i < w; ++i) {
-			// Generating an x, y coord between 0 and 500
-			int x = rand() % 500;
-			int y = rand() % 500;
-
-			// Adding coords x, y to life map
-			this->addCell(x, y);
-		}
+		randomize();
 	}
 	~LifeContainer() { cells.clear(); }
 
@@ -59,6 +53,18 @@ public:
 		cells.erase(singleCoord);
 	}
 
+	// clearing contents of cells map
+	void clear() {
+		cells.clear();
+	}
+
+// ACCESSORS //
+	// Returning copy of map storing cell data
+	std::map<int, bool> copyMap() {
+		return cells;
+	}
+
+// METHODS //
 	// Converting 2D coords to 1D coord. Returning int
 	int convertCoords(int x, int y) {
 		return x * w + y;
@@ -72,9 +78,21 @@ public:
 		return std::pair<int, int>(x, y);
 	}
 
-// ACCESSORS //
-	std::map<int, bool> copyMap() {
-		return cells;
+	// clears contents of cells map and randomize
+	void randomize() {
+
+		// Clearing cells map
+		cells.clear();
+
+		// Placing random cells in the grid
+		for (int i = 0; i < 1000; ++i) {
+			// Generating an x, y coord between 0 and 500
+			int x = rand() % 500;
+			int y = rand() % 500;
+
+			// Adding coords x, y to life map
+			this->addCell(x, y);
+		}
 	}
 };
 
@@ -94,6 +112,17 @@ void special(int key, int, int) {
 	default: return;
 	}
 	glutPostRedisplay();
+}
+
+// Handles the timer by incrementing the angle of rotation and requesting the
+// window to display again, provided the program is in the spinning state.
+// Since the timer function is only called once, it sets the same function to
+// be called again.
+void timer(int v) {
+
+	glutPostRedisplay();
+
+	glutTimerFunc(1000 / FPS, timer, v);
 }
 
 // Displays the arm in its current position and orientation.  The whole
@@ -124,6 +153,10 @@ void display() {
 		double screenCoordX = 0;
 		double screenCoordY = 0;
 
+		// I am checking to see what quadrant the points are in by checking if x, y are bigger or
+		// smaller than the half way points of the width and height of the screen.
+		// I then linearly interpolate between screen space and world space to get the approproate
+		// values for x, y between (-1,1).
 		// QI
 		if (coordX > (w / 2) && coordY > (h / 2)) {
 			screenCoordX = (coordX - 250) / (w / 2);
@@ -148,15 +181,16 @@ void display() {
 		//input coord points
 		glVertex3f(screenCoordX, screenCoordY, 0);
 
-		std::cout << "Adding: " << screenCoordX << " " << screenCoordY << std::endl;
-
+		//std::cout << "Adding: " << screenCoordX << " " << screenCoordY << std::endl;
 	}
-
 
 	glEnd();
 
 	// Flush drawing command buffer to make drawing happen as soon as possible.
 	glFlush();
+
+	// Randomizing
+	lc.randomize();
 }
 
 // Initializes GLUT, the display mode, and main window; registers callbacks;
@@ -169,5 +203,6 @@ int main(int argc, char** argv) {
 	glutCreateWindow("Conway's Game of Life");
 	glutDisplayFunc(display);
 	glutSpecialFunc(special);
+	glutTimerFunc(100, timer, 0);
 	glutMainLoop();
 }

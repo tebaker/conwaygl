@@ -22,28 +22,40 @@ static const int h = 500;
 static const int w = 500;
 
 // Frames Per Second
-static int FPS = 60;
+static int FPS = 1;
 
 // Class holding and modifying all the cells currently in the game
 class LifeContainer {
 	// Holding contests of the each cell in the game
 	std::map<int, bool> cells;
-	
+
+	// Holding the pending alive cells. Per rule 4) Any dead cell with exactly three live
+	// neighbours becomes a live cell, as if by reproduction.
+	// This map will hold the cell single dimentional index, and the number of neighbors it has.
+	std::map<int, int> pendingAlive;
+
 public:
 	// Will generate a random set of cells placed around the grid
 	LifeContainer() {
 		// Seeding rand
-		srand(time( nullptr ));
+		srand(time(nullptr));
 
 		randomize();
 	}
 	~LifeContainer() { cells.clear(); }
 
-// MODIFIERS //
-	// Adding cell at position x, y
+	// MODIFIERS //
+		// Adding cell at position x, y
 	void addCell(int x, int y) {
 		int heldCoords = convertCoords(x, y);
 		cells.insert(std::pair<int, bool>(heldCoords, true));
+	}
+
+	// Adding pending alive cell at position x, y
+	void addPendingAliveCell(int x, int y) {
+		int heldCoords = convertCoords(x, y);
+		// Holding converted coords and 0 to start the neighbor count.
+		pendingAlive.insert(std::pair<int, bool>(heldCoords, 0));
 	}
 
 	// Removing cell at position x, y
@@ -51,15 +63,20 @@ public:
 		int heldCoords = convertCoords(x, y);
 		cells.erase(heldCoords);
 	}
-	
+
 	// Removing cell at single coord position
 	void removeCell(int singleCoord) {
 		cells.erase(singleCoord);
 	}
 
-	// clearing contents of cells map
-	void clear() {
+	// Clearing contents of cells map
+	void clearCells() {
 		cells.clear();
+	}
+
+	// Clearing contents of penting alive cells map
+	void clearPendingAlive() {
+		pendingAlive.clear();
 	}
 
 	// clears contents of cells map and randomize
@@ -69,41 +86,157 @@ public:
 		cells.clear();
 
 		// Placing random cells in the grid
-		for (int i = 0; i < 1000; ++i) {
+		for (int i = 0; i < 3000; ++i) {
 			// Generating an x, y coord between 0 and 500
-			int x = rand() % 500;
-			int y = rand() % 500;
+			int x = rand() % 100 + 200;
+			int y = rand() % 100 + 200;
 
 			// Adding coords x, y to life map
 			this->addCell(x, y);
 		}
 	}
 
-// ACCESSORS //
-	// Returning copy of map storing cell data
+	// ACCESSORS //
+		// Returning copy of map storing cell data
 	std::map<int, bool> copyMap() {
 		return cells;
 	}
 
-	// Given x, y coords, check neighbor will look at all four neighbors N, E, S, W, of the 
-	// current cell and return the number of neighbors it has
-	int checkNeighbors(int singleCoord) {
-		int x = this->convertCoords(singleCoord).first;
-		int y = this->convertCoords(singleCoord).second;
+	// METHODS //
+		// Evaluating N, E, S, W neighbors of the current cell and based on the rules,
+		// to determine if the cell will live or die next step.
+	void evaluateNeighbors() {
 
-		// Checking for N neighbor in 
+		// Looping through all the cells in cells map
+		for (std::map<int, bool>::iterator it = cells.begin(); it != cells.end(); ++it) {
 
-		/*
-			If I use another map, same way I'm doing it now. Lets call it the pendingAliveMap.
-			But rahter than a boolean for the next state I use an integer counter that starts at 0
-			and moves upward.
-			Every time ANOTHER CELL LOOKS AT IT, I increase the counter by 1. If the resulting number
-			is exactly 3, then the cell becomes alive next step and is added to the cells map.
-			BRILLIANT!
-		*/
+			int x = convertCoords(it->first).first;
+			int y = convertCoords(it->first).second;
+
+			int neighborCounter = 0;
+
+			// Checking if cell at neighbor index is contained within the cells map.
+			// If it is, increment neighbor counter.
+			// If it is NOT, 
+			// N: x, +y
+			if (cells.find(convertCoords(x, y + 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x, y + 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x, y + 1);
+				}
+			}
+			// E: +x, y
+			if (cells.find(convertCoords(x + 1, y)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x + 1, y));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x + 1, y);
+				}
+			}
+			// S: x, -y
+			if (cells.find(convertCoords(x, y - 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x, y - 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x, y - 1);
+				}
+			}
+			// W: -x, y
+			if (cells.find(convertCoords(x - 1, y)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x - 1, y));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x - 1, y);
+				}
+			}
+
+			// 1) Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+			if (neighborCounter < 2) {
+				// Setting life tracker to false, will be killed on next step.
+				cells.find(convertCoords(x, y))->second = false;
+			}
+			// 2) Any live cell with two or three live neighbours lives on to the next generation.
+			//        - No action needed, move on.
+
+			// 3) Any live cell with more than three live neighbours dies, as if by overpopulation.
+			if (neighborCounter > 3) {
+				// Setting life tracker to false, will be killed on next step.
+				cells.find(convertCoords(x, y))->second = false;
+			}
+
+			/*
+				If I use another map, same way I'm doing it now. Lets call it the pendingAliveMap.
+				But rahter than a boolean for the next state I use an integer counter that starts at 0
+				and moves upward.
+				Every time ANOTHER CELL LOOKS AT IT, I increase the counter by 1. If the resulting number
+				is exactly 3, then the cell becomes alive next step and is added to the cells map.
+				BRILLIANT!
+			*/
+		}
 	}
 
-// METHODS //
+	// Next Step will kill off any cells marked for death, and add any dead cells with exactly three neighbors
+	void nextStep() {
+
+		// Looping through all the cells in the cell map. Removing any marked for death.
+		std::map<int, bool>::iterator it = cells.begin();
+		while (it != cells.end()) {
+			// If boolean is false, that means the cell is marked for dead and will now be removed.
+			if (it->second == false) {
+				it = this->cells.erase(it);
+			}
+			// Else, keeping alive. moving iterator forward one to account for the one deleted.
+			else {
+				++it;
+			}
+		}
+
+		// Per rule 4) Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction,
+		// I will now loop through all the pending alive cells and check if their neighbor count is equal to 3 exactly.
+		// If so, they will be added to the cells map as alive cells.
+		for (std::map<int, int>::iterator it = pendingAlive.begin(); it != pendingAlive.end(); ++it) {
+			if (it->second == 3) {
+				// Bringing dead cell back to life
+				int x = convertCoords(it->first).first;
+				int y = convertCoords(it->first).second;
+
+				addCell(x, y);
+			}
+		}
+
+		// Last thing to do is remove all the pending alive cells from the pending alive map.
+		clearPendingAlive();
+	}
+
 	// Converting 2D coords to 1D coord. Returning int
 	int convertCoords(int x, int y) {
 		return x * w + y;
@@ -149,6 +282,13 @@ void special(int key, int, int) {
 // Since the timer function is only called once, it sets the same function to
 // be called again.
 void timer(int v) {
+
+	// Evaluating all alive cells and dead cells according to the rules
+	lc.evaluateNeighbors();
+	
+	// Taking next step, the cells marked for death will be removed, and
+	// the dead cells that satisfy rule 4 will be brought back to life.
+	lc.nextStep();
 
 	glutPostRedisplay();
 

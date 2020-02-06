@@ -1,2 +1,4 @@
-# cppmath
-Working through James M. Van Verth, Lars M. Bishop's book on math for programming in C++
+# OpenGL C++ Conway's Game of Life
+
+### Still life (get it!)
+![img1](ConwaysGameOfLifeScreenshot_1.png)

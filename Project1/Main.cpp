@@ -3,6 +3,8 @@
 		2) Any live cell with two or three live neighbours lives on to the next generation.
 		3) Any live cell with more than three live neighbours dies, as if by overpopulation.
 		4) Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+
+		EACH CELL INTERACTS WITH ITS  E I G H T  N E I G H B O R S ! !
 */
 
 #ifdef __APPLE_CC__
@@ -22,7 +24,7 @@ static const int h = 500;
 static const int w = 500;
 
 // Frames Per Second
-static int FPS = 1;
+static int FPS = 2;
 
 // Class holding and modifying all the cells currently in the game
 class LifeContainer {
@@ -41,8 +43,15 @@ public:
 		srand(time(nullptr));
 
 		randomize();
+
+		// Making a glider
+		/*addCell(250, 250);
+		addCell(251, 251);
+		addCell(251, 250);
+		addCell(250, 249);
+		addCell(249, 251);*/
 	}
-	~LifeContainer() { cells.clear(); }
+	~LifeContainer() { cells.clear(); pendingAlive.clear(); }
 
 	// MODIFIERS //
 		// Adding cell at position x, y
@@ -88,8 +97,8 @@ public:
 		// Placing random cells in the grid
 		for (int i = 0; i < 3000; ++i) {
 			// Generating an x, y coord between 0 and 500
-			int x = rand() % 100 + 200;
-			int y = rand() % 100 + 200;
+			int x = rand() % 200 + 200;
+			int y = rand() % 200 + 200;
 
 			// Adding coords x, y to life map
 			this->addCell(x, y);
@@ -117,7 +126,8 @@ public:
 
 			// Checking if cell at neighbor index is contained within the cells map.
 			// If it is, increment neighbor counter.
-			// If it is NOT, 
+			// If it is NOT, add or update the pending cell map
+
 			// N: x, +y
 			if (cells.find(convertCoords(x, y + 1)) != cells.end()) {
 				++neighborCounter;
@@ -131,6 +141,21 @@ public:
 				// Else, it's not in the pending alive cells map. Therefore, add it.
 				else {
 					addPendingAliveCell(x, y + 1);
+				}
+			}
+			// NE: +x, +y
+			if (cells.find(convertCoords(x + 1, y + 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x + 1, y + 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x + 1, y + 1);
 				}
 			}
 			// E: +x, y
@@ -148,6 +173,21 @@ public:
 					addPendingAliveCell(x + 1, y);
 				}
 			}
+			// SE: +x, -y
+			if (cells.find(convertCoords(x + 1, y - 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x + 1, y - 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x + 1, y - 1);
+				}
+			}
 			// S: x, -y
 			if (cells.find(convertCoords(x, y - 1)) != cells.end()) {
 				++neighborCounter;
@@ -161,6 +201,21 @@ public:
 				// Else, it's not in the pending alive cells map. Therefore, add it.
 				else {
 					addPendingAliveCell(x, y - 1);
+				}
+			}
+			// SW: -x, -y
+			if (cells.find(convertCoords(x - 1, y - 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x - 1, y - 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x - 1, y - 1);
 				}
 			}
 			// W: -x, y
@@ -178,9 +233,24 @@ public:
 					addPendingAliveCell(x - 1, y);
 				}
 			}
+			// NW: -x, +y
+			if (cells.find(convertCoords(x - 1, y + 1)) != cells.end()) {
+				++neighborCounter;
+			}
+			else {
+				// if pending cell is found at neighbor space, and is already in pendingCell map, increment neighbor count
+				std::map<int, int>::iterator it = pendingAlive.find(convertCoords(x - 1, y + 1));
+				if (it != pendingAlive.end()) {
+					it->second += 1;
+				}
+				// Else, it's not in the pending alive cells map. Therefore, add it.
+				else {
+					addPendingAliveCell(x - 1, y + 1);
+				}
+			}
 
 			// 1) Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-			if (neighborCounter < 2) {
+			if (neighborCounter <= 1) {
 				// Setting life tracker to false, will be killed on next step.
 				cells.find(convertCoords(x, y))->second = false;
 			}
@@ -188,7 +258,7 @@ public:
 			//        - No action needed, move on.
 
 			// 3) Any live cell with more than three live neighbours dies, as if by overpopulation.
-			if (neighborCounter > 3) {
+			if (neighborCounter >= 4) {
 				// Setting life tracker to false, will be killed on next step.
 				cells.find(convertCoords(x, y))->second = false;
 			}
@@ -229,6 +299,8 @@ public:
 				int x = convertCoords(it->first).first;
 				int y = convertCoords(it->first).second;
 
+				std::cout << "Adding: " << x << " " << y << std::endl;
+
 				addCell(x, y);
 			}
 		}
@@ -261,7 +333,15 @@ static LifeContainer lc;
 void special(int key, int, int) {
 	switch (key) {
 	case GLUT_KEY_LEFT: /*DO SOMETHING*/; break;
-	case GLUT_KEY_RIGHT: /*DO SOMETHING*/; break;
+	case GLUT_KEY_RIGHT:
+		// Evaluating all alive cells and dead cells according to the rules
+		lc.evaluateNeighbors();
+
+		// Taking next step, the cells marked for death will be removed, and
+		// the dead cells that satisfy rule 4 will be brought back to life.
+		lc.nextStep();
+		break;
+
 	case GLUT_KEY_UP:
 		if (FPS < 180) {
 			FPS += 10;

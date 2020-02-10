@@ -42,14 +42,14 @@ public:
 		// Seeding rand
 		srand(time(nullptr));
 
-		randomize();
+		//randomize();
 
 		// Making a glider
-		/*addCell(250, 250);
+		addCell(250, 250);
 		addCell(251, 251);
 		addCell(251, 250);
 		addCell(250, 249);
-		addCell(249, 251);*/
+		addCell(249, 251);
 	}
 	~LifeContainer() { cells.clear(); pendingAlive.clear(); }
 
@@ -109,6 +109,15 @@ public:
 		// Returning copy of map storing cell data
 	std::map<int, bool> copyMap() {
 		return cells;
+	}
+
+	void printMap() {
+		for (std::map<int, bool>::iterator it = cells.begin(); it != cells.end(); ++it) {
+			auto x = convertCoords(it->first).first;
+			auto y = convertCoords(it->first).second;
+			std::cout << x << " " << y << std::endl;
+		}
+		std::cout << "===" << std::endl;
 	}
 
 	// METHODS //
@@ -343,9 +352,7 @@ void special(int key, int, int) {
 		break;
 
 	case GLUT_KEY_UP:
-		if (FPS < 180) {
-			FPS += 10;
-		}
+		lc.printMap();
 		break;
 	case GLUT_KEY_DOWN:
 		if (FPS > 10) {
@@ -364,11 +371,11 @@ void special(int key, int, int) {
 void timer(int v) {
 
 	// Evaluating all alive cells and dead cells according to the rules
-	lc.evaluateNeighbors();
+	//lc.evaluateNeighbors();
 	
 	// Taking next step, the cells marked for death will be removed, and
 	// the dead cells that satisfy rule 4 will be brought back to life.
-	lc.nextStep();
+	//lc.nextStep();
 
 	glutPostRedisplay();
 

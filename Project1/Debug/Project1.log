@@ -1,2 +1,5 @@
-﻿  Main.cpp
+﻿  LifeContainer.cpp
+c:\users\talon.baker\documents\conwaygl\project1\lifecontainer.cpp(6): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Main.cpp
+  Generating Code...
   Project1.vcxproj -> C:\Users\talon.baker\Documents\conwaygl\Project1\Debug\Project1.exe
